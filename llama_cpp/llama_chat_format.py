@@ -284,26 +284,53 @@ def _convert_text_completion_chunks_to_chat(
                     }
                 ],
             }
-        yield {
-            "id": "chat" + chunk["id"],
-            "model": chunk["model"],
-            "created": chunk["created"],
-            "object": "chat.completion.chunk",
-            "choices": [
-                {
-                    "index": 0,
-                    "delta": (
-                        {
-                            "content": chunk["choices"][0]["text"],
-                        }
-                        if chunk["choices"][0]["finish_reason"] is None
-                        else {}
-                    ),
-                    "logprobs": chunk["choices"][0]["logprobs"],
-                    "finish_reason": chunk["choices"][0]["finish_reason"],
+        if chunk["choices"][0]["finish_reason"] is None:
+            yield {
+                "id": "chat" + chunk["id"],
+                "model": chunk["model"],
+                "created": chunk["created"],
+                "object": "chat.completion.chunk",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": (
+                            {
+                                "content": chunk["choices"][0]["text"],
+                            }
+                            if chunk["choices"][0]["finish_reason"] is None
+                            else {}
+                        ),
+                        "logprobs": chunk["choices"][0]["logprobs"],
+                        "finish_reason": chunk["choices"][0]["finish_reason"],
+                    }
+                ]
+            }
+        else:
+            yield {
+                "id": "chat" + chunk["id"],
+                "model": chunk["model"],
+                "created": chunk["created"],
+                "object": "chat.completion.chunk",
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": (
+                            {
+                                "content": chunk["choices"][0]["text"],
+                            }
+                            if chunk["choices"][0]["finish_reason"] is None
+                            else {}
+                        ),
+                        "logprobs": chunk["choices"][0]["logprobs"],
+                        "finish_reason": chunk["choices"][0]["finish_reason"],
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": chunk["usage"]["prompt_tokens"],
+                    "completion_tokens": chunk["usage"]["completion_tokens"],
+                    "total_tokens": chunk["usage"]["total_tokens"],
                 }
-            ],
-        }
+            }
 
 
 def _convert_completion_to_chat(

@@ -1386,6 +1386,11 @@ class Llama:
                         "finish_reason": finish_reason,
                     }
                 ],
+                "usage": {
+                    "prompt_tokens": len(prompt_tokens),
+                    "completion_tokens": len(completion_tokens),
+                    "total_tokens": len(prompt_tokens) + len(completion_tokens),
+                },
             }
             if self.cache:
                 if self.verbose:
