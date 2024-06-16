@@ -1,5 +1,5 @@
 update:
-	poetry install
+	# poetry install
 	git submodule update --init --recursive
 
 update.vendor:
