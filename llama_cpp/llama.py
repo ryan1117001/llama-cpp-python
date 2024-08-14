@@ -1528,7 +1528,8 @@ class Llama:
                 if self.verbose:
                     print("Llama._create_completion: cache save", file=sys.stderr)
                 self.cache[prompt_tokens + completion_tokens] = self.save_state()
-                print("Llama._create_completion: cache saved", file=sys.stderr)
+                if self.verbose:
+                    print("Llama._create_completion: cache saved", file=sys.stderr)
             return
 
         if self.cache:
@@ -2165,7 +2166,7 @@ class Llama:
 
         files = [
             file["name"] if isinstance(file, dict) else file
-            for file in hffs.ls(repo_id, recursive=True))
+            for file in hffs.ls(repo_id, recursive=True)
         ]
 
         # split each file into repo_id, subfolder, filename
