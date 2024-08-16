@@ -198,6 +198,7 @@ class Llama:
             A Llama instance.
         """
         self.verbose = verbose
+        self._stack = contextlib.ExitStack()
 
         set_verbose(verbose)
 
@@ -365,8 +366,6 @@ class Llama:
         if not os.path.exists(model_path):
             raise ValueError(f"Model path does not exist: {model_path}")
 
-        self._stack = contextlib.ExitStack()
-
         self._model = self._stack.enter_context(
             contextlib.closing(
                 _LlamaModel(
@@ -420,6 +419,15 @@ class Llama:
                 raise RuntimeError(
                     f"Failed to initialize LoRA adapter from lora path: {self.lora_path}"
                 )
+
+            def free_lora_adapter():
+                if self._lora_adapter is None:
+                    return
+                llama_cpp.llama_lora_adapter_free(self._lora_adapter)
+                self._lora_adapter = None
+
+            self._stack.callback(free_lora_adapter)
+
             assert self._ctx.ctx is not None
             if llama_cpp.llama_lora_adapter_set(
                 self._ctx.ctx, self._lora_adapter, self.lora_scale
@@ -1058,13 +1066,13 @@ class Llama:
 
         if (
             (isinstance(prompt, list) and suffix is None)
-            or self._model.add_bos_token() == 0
+            or not self._model.add_bos_token()
             or bos_tokens[:1] == [-1]
         ):
             bos_tokens = []
 
         if (isinstance(prompt, list) and suffix is None) or (
-            self._model.add_eos_token() != 1 and sep_token_id == -1
+            not self._model.add_eos_token() and sep_token_id == -1
         ):
             eos_tokens = []
 
@@ -2090,14 +2098,9 @@ class Llama:
 
     def close(self) -> None:
         """Explicitly free the model from memory."""
-        if hasattr(self,'_stack'):
-            if self._stack is not None:
-                self._stack.close()
+        self._stack.close()
 
     def __del__(self) -> None:
-        if hasattr(self,'_lora_adapter'):
-            if self._lora_adapter is not None:
-                llama_cpp.llama_lora_adapter_free(self._lora_adapter)
         self.close()
 
     @staticmethod
